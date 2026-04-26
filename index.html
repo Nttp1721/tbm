@@ -76,25 +76,23 @@ header p { color: var(--muted); font-size: .88rem; margin-top: 10px; }
 .badge-pill { font-size: .7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .3px; }
 .badge-tx { background: rgba(91,141,255,.18); color: var(--accent); }
 
-.tx-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.tx-selector { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
 .tx-selector .lbl { font-size: .82rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
-.pills { display: flex; gap: 6px; }
+.pills { display: flex; gap: 4px; flex-wrap: wrap; }
 
 .pill {
-  width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1.5px solid var(--border); background: var(--card);
-  color: var(--muted); font-size: .9rem; font-weight: 700; cursor: pointer; transition: all .18s; user-select: none;
+  width: 30px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted); font-size: .78rem; font-weight: 700;
+  cursor: pointer; transition: all .15s; user-select: none;
 }
 .pill:hover { border-color: var(--accent); color: var(--accent); }
-.pill.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 14px rgba(91,141,255,.4); }
+.pill.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(91,141,255,.35); }
 
-.custom-wrap {
-  display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 4px 10px 4px 12px; transition: border-color .2s;
-}
-.custom-wrap:focus-within { border-color: var(--accent); }
-.custom-wrap span { font-size: .78rem; color: var(--muted); white-space: nowrap; }
-.custom-wrap input { background: transparent; border: none; color: var(--text); font-family: inherit; font-size: .9rem; font-weight: 700; width: 48px; text-align: center; outline: none; }
+
 
 .weight-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
 .wchip { font-size: .75rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; display: flex; align-items: center; gap: 5px; }
@@ -245,10 +243,6 @@ footer { text-align: center; margin-top: 48px; color: var(--muted); font-size: .
       <div class="tx-selector">
         <span class="lbl">Số lần TX:</span>
         <div class="pills" id="pills-hk1"></div>
-        <div class="custom-wrap">
-          <span>Tự nhập:</span>
-          <input type="number" id="custom-hk1" min="1" max="20" placeholder="—" oninput="onCustomCount('hk1',this.value)">
-        </div>
       </div>
       <div class="weight-row">
         <span class="wchip wchip-tx">🔵 TX × 1</span>
@@ -278,10 +272,6 @@ footer { text-align: center; margin-top: 48px; color: var(--muted); font-size: .
       <div class="tx-selector">
         <span class="lbl">Số lần TX:</span>
         <div class="pills" id="pills-hk2"></div>
-        <div class="custom-wrap">
-          <span>Tự nhập:</span>
-          <input type="number" id="custom-hk2" min="1" max="20" placeholder="—" oninput="onCustomCount('hk2',this.value)">
-        </div>
       </div>
       <div class="weight-row">
         <span class="wchip wchip-tx">🔵 TX × 1</span>
@@ -319,7 +309,7 @@ footer { text-align: center; margin-top: 48px; color: var(--muted); font-size: .
     <div class="formula-card">📐 <strong>Công thức Cả Năm:</strong><br><code>ĐTB_CN = (ĐTB_HK1 + 2 × ĐTB_HK2) ÷ 3</code><br><br>⚠️ <strong>Lưu ý:</strong> Hãy tính xong HK1 và HK2 trước.</div>
   </div>
 
-  <footer>Made with xDorzy · Tính theo quy định đánh giá học kỳ phổ thông Việt Nam</footer>
+  <footer>Made with XDORZY · Tính theo quy định đánh giá học kỳ phổ thông Việt Nam</footer>
 </div>
 
 <!-- SHARE OVERLAY -->
@@ -394,21 +384,13 @@ setTimeout(() => {
 function buildPills(hk) {
   const el = document.getElementById('pills-' + hk);
   el.innerHTML = '';
-  [3,4,5,6].forEach(n => {
+  [1,2,3,4,5,6,7,8,9,10].forEach(n => {
     const d = document.createElement('div');
     d.className = 'pill' + (S[hk].count === n ? ' active' : '');
     d.textContent = n;
-    d.addEventListener('click', () => { S[hk].count = n; document.getElementById('custom-' + hk).value = ''; buildPills(hk); buildTxGrid(hk); saveState(); });
+    d.addEventListener('click', () => { S[hk].count = n; buildPills(hk); buildTxGrid(hk); saveState(); });
     el.appendChild(d);
   });
-}
-
-function onCustomCount(hk, v) {
-  const n = parseInt(v);
-  if (!n || n < 1 || n > 20) return;
-  S[hk].count = n;
-  document.querySelectorAll('#pills-' + hk + ' .pill').forEach(p => p.classList.remove('active'));
-  buildTxGrid(hk); saveState();
 }
 
 function buildTxGrid(hk) {
@@ -420,7 +402,12 @@ function buildTxGrid(hk) {
     const inp = document.createElement('input');
     inp.className = 'tx-inp'; inp.type = 'number'; inp.min = 0; inp.max = 10; inp.step = 0.1; inp.placeholder = '0 – 10';
     if (S[hk].txVals[i] !== undefined) inp.value = S[hk].txVals[i];
-    inp.addEventListener('input', () => { S[hk].txVals[i] = parseFloat(inp.value) || 0; saveState(); });
+    inp.addEventListener('input', () => {
+      let v = parseFloat(inp.value);
+      if (v > 10) { inp.value = 10; v = 10; }
+      if (v < 0)  { inp.value = 0;  v = 0; }
+      S[hk].txVals[i] = v || 0; saveState();
+    });
     wrap.appendChild(lbl); wrap.appendChild(inp); grid.appendChild(wrap);
   }
 }
@@ -604,4 +591,4 @@ async function downloadImage() {
 document.getElementById('share-overlay').addEventListener('click', function(e) { if (e.target === this) closeExport(); });
 </script>
 </body>
-</html>
+                                                        </html>
