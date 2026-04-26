@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tính Điểm Trung Bình Môn | GradeCalc VN</title>
+<title>Tính Điểm Trung Bình Môn | DORZY GRADE VN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -227,7 +227,7 @@ footer { text-align: center; margin-top: 48px; color: var(--muted); font-size: .
 <body>
 <div class="wrap">
   <header>
-    <div class="logo-badge">🎓 GradeCalc VN</div>
+    <div class="logo-badge">🎓 DORZY GRADE VN</div>
     <h1>Tính Điểm Trung Bình Môn</h1>
     <p>Theo quy định — Hệ số: TX ×1 &nbsp;|&nbsp; Giữa kỳ ×2 &nbsp;|&nbsp; Cuối kỳ ×3</p>
   </header>
@@ -319,7 +319,7 @@ footer { text-align: center; margin-top: 48px; color: var(--muted); font-size: .
     <div class="formula-card">📐 <strong>Công thức Cả Năm:</strong><br><code>ĐTB_CN = (ĐTB_HK1 + 2 × ĐTB_HK2) ÷ 3</code><br><br>⚠️ <strong>Lưu ý:</strong> Hãy tính xong HK1 và HK2 trước.</div>
   </div>
 
-  <footer>Made with ❤️ · Tính theo quy định đánh giá học kỳ phổ thông Việt Nam</footer>
+  <footer>Made with xDorzy · Tính theo quy định đánh giá học kỳ phổ thông Việt Nam</footer>
 </div>
 
 <!-- SHARE OVERLAY -->
@@ -344,7 +344,52 @@ const S = {
   res: { hk1: null, hk2: null, annual: null }
 };
 
+// ===== LOCALSTORAGE =====
+function saveState() {
+  try { localStorage.setItem('gradecalc_v1', JSON.stringify(S)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('gradecalc_v1');
+    if (!raw) return;
+    const sv = JSON.parse(raw);
+    ['hk1','hk2'].forEach(hk => {
+      if (!sv[hk]) return;
+      S[hk].count  = sv[hk].count  || 4;
+      S[hk].txVals = sv[hk].txVals || [];
+      S[hk].gk     = sv[hk].gk     || 0;
+      S[hk].ck     = sv[hk].ck     || 0;
+    });
+    if (sv.res) { S.res.hk1 = sv.res.hk1; S.res.hk2 = sv.res.hk2; S.res.annual = sv.res.annual; }
+  } catch(e) {}
+}
+
+loadState();
 ['hk1','hk2'].forEach(hk => { buildPills(hk); buildTxGrid(hk); });
+
+// Khôi phục GK/CK và kết quả sau khi DOM render
+setTimeout(() => {
+  ['hk1','hk2'].forEach(hk => {
+    if (S[hk].gk) document.getElementById('gk-' + hk).value = S[hk].gk;
+    if (S[hk].ck) document.getElementById('ck-' + hk).value = S[hk].ck;
+    document.querySelectorAll('#tx-grid-' + hk + ' input').forEach((inp, i) => {
+      if (S[hk].txVals[i] !== undefined) inp.value = S[hk].txVals[i];
+    });
+    if (S.res[hk] !== null) {
+      document.getElementById('result-' + hk).textContent = S.res[hk].toFixed(1);
+      const dtb = S.res[hk], gEl = document.getElementById('grade-' + hk);
+      let cls, txt;
+      if (dtb >= 8.0) { cls='grade-A'; txt='✨ Giỏi'; }
+      else if (dtb >= 6.5) { cls='grade-B'; txt='👍 Khá'; }
+      else if (dtb >= 5.0) { cls='grade-C'; txt='📘 Trung Bình'; }
+      else { cls='grade-D'; txt='❌ Yếu'; }
+      gEl.className = 'grade-tag ' + cls; gEl.textContent = txt;
+      document.getElementById('export-' + hk).classList.remove('hidden');
+    }
+  });
+  if (S.res.annual !== null) calcAnnual();
+}, 0);
 
 function buildPills(hk) {
   const el = document.getElementById('pills-' + hk);
@@ -353,7 +398,7 @@ function buildPills(hk) {
     const d = document.createElement('div');
     d.className = 'pill' + (S[hk].count === n ? ' active' : '');
     d.textContent = n;
-    d.addEventListener('click', () => { S[hk].count = n; document.getElementById('custom-' + hk).value = ''; buildPills(hk); buildTxGrid(hk); });
+    d.addEventListener('click', () => { S[hk].count = n; document.getElementById('custom-' + hk).value = ''; buildPills(hk); buildTxGrid(hk); saveState(); });
     el.appendChild(d);
   });
 }
@@ -363,7 +408,7 @@ function onCustomCount(hk, v) {
   if (!n || n < 1 || n > 20) return;
   S[hk].count = n;
   document.querySelectorAll('#pills-' + hk + ' .pill').forEach(p => p.classList.remove('active'));
-  buildTxGrid(hk);
+  buildTxGrid(hk); saveState();
 }
 
 function buildTxGrid(hk) {
@@ -375,7 +420,7 @@ function buildTxGrid(hk) {
     const inp = document.createElement('input');
     inp.className = 'tx-inp'; inp.type = 'number'; inp.min = 0; inp.max = 10; inp.step = 0.1; inp.placeholder = '0 – 10';
     if (S[hk].txVals[i] !== undefined) inp.value = S[hk].txVals[i];
-    inp.addEventListener('input', () => { S[hk].txVals[i] = parseFloat(inp.value) || 0; });
+    inp.addEventListener('input', () => { S[hk].txVals[i] = parseFloat(inp.value) || 0; saveState(); });
     wrap.appendChild(lbl); wrap.appendChild(inp); grid.appendChild(wrap);
   }
 }
@@ -398,6 +443,7 @@ function calculate(hk) {
   else { cls='grade-D'; txt='❌ Yếu'; }
   gEl.className = 'grade-tag ' + cls; gEl.textContent = txt;
   document.getElementById('export-' + hk).classList.remove('hidden');
+  saveState();
 }
 
 function calcAnnual() {
@@ -409,6 +455,7 @@ function calcAnnual() {
   S.res.annual = cn;
   document.getElementById('an-cn').textContent = cn.toFixed(1);
   document.getElementById('export-annual').classList.remove('hidden');
+  saveState();
 }
 
 function switchTab(e, id) {
@@ -472,7 +519,7 @@ function buildCard(mode) {
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#5b8dff,#b98bff);display:flex;align-items:center;justify-content:center;font-size:1rem;">🎓</div>
         <div>
-          <div style="font-size:.65rem;font-weight:800;color:#5b8dff;letter-spacing:1.2px;">GRADECALC VN</div>
+          <div style="font-size:.65rem;font-weight:800;color:#5b8dff;letter-spacing:1.2px;">DORZY GRADE VN</div>
           <div style="font-size:.58rem;color:#4a5a7a;margin-top:1px;">Kết quả học tập</div>
         </div>
       </div>
@@ -511,7 +558,7 @@ function buildCard(mode) {
 
     <!-- footer -->
     <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06);padding-top:12px;">
-      <div style="font-size:.58rem;color:#2a3550;">gradecalc-vn.github.io</div>
+      <div style="font-size:.58rem;color:#2a3550;">nttp1721.github.io/tbm/</div>
       <div style="display:flex;gap:4px;">
         ${[...Array(5)].map((_,i) => `<div style="width:5px;height:5px;border-radius:50%;background:${i < Math.round(score/2) ? ringColor : 'rgba(255,255,255,.1)'};"></div>`).join('')}
       </div>
@@ -557,4 +604,4 @@ async function downloadImage() {
 document.getElementById('share-overlay').addEventListener('click', function(e) { if (e.target === this) closeExport(); });
 </script>
 </body>
-  </html>
+</html>
